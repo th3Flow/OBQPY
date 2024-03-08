@@ -17,8 +17,8 @@ def iterSequQBlock(vx, mW, vC):
     nVars = mW.shape[1]
     #Mixed-Integer Quadratically Constrained Quadratic Programming (MIQP)
     model = gp.Model("MIQCQP")
-    # model.setParam('MIPGap', 1e-9)  # Sets the MIP gap to 0.01%
-    # model.setParam("NumericFocus", 3)  # Increase numerical focus
+    model.setParam('MIPGap', 1e-4)  # Sets the MIP gap to 0.01%
+    model.setParam("NumericFocus", 3)  # Increase numerical focus
 
     # Decision variables (vb) as binary, mapped to {-1, 1} in the objective
     vb = model.addVars(nVars, vtype=GRB.BINARY, name="vb")
@@ -26,17 +26,20 @@ def iterSequQBlock(vx, mW, vC):
     model.update()
 
     # Objective function
-    objective = gp.QuadExpr()
+    obj = gp.QuadExpr()
     for i in range(mW.shape[0]):  # Rows of mW
+        se = 0
         for j in range(nVars):  # Elements of vb and vx
             # Adjust the vb[j] from {0, 1} to {-1, 1}
             vbDec = 2*vb[j] - 1
+            sd = vx[j] - vbDec
             # Contribution of each element to the quadratic term
-            sE = vx[j] - mW[i, j] * vbDec
-            objective.add(sE * sE)
+            se += mW[i, j] * sd
+        obj += se * se
+        # objective.add(se * se)
 
     # Set the objective
-    model.setObjective(objective, GRB.MINIMIZE)
+    model.setObjective(obj, GRB.MINIMIZE)
 
     # Optimize the model
     model.optimize()
