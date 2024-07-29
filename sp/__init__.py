@@ -1,2 +1,3 @@
 from .idealBinFilt import idealBinFilt
-from .convMtx      import convmtx
+from .convMtx      import convMtx
+from .gdShift      import gdShift

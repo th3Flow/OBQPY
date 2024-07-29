@@ -2,7 +2,7 @@ import numpy as np
 import gurobipy as gp
 from gurobipy import GRB
 
-def iterSequQBlock(vx, mW, vC):
+def fullOpt(vx, mW, vBStart):
     """
     Args:
         vx: Input vector.
@@ -16,12 +16,22 @@ def iterSequQBlock(vx, mW, vC):
     """
     nVars = mW.shape[1]
     #Mixed-Integer Quadratically Constrained Quadratic Programming (MIQP)
-    model = gp.Model("MIQCQP")
-    model.setParam('MIPGap', 1e-4)  # Sets the MIP gap to 0.01%
-    model.setParam("NumericFocus", 3)  # Increase numerical focus
+        #Mixed-Integer Quadratically Constrained Quadratic Programming (MIQP)
+    model = gp.Model("MIQP")
+
+    model.setParam("TimeLimit", 20)  # Increase numerical focus
+    model.setParam("VarBranch", 3) 
+    model.setParam("MIPFocus", 3)  # Shift focus to finding good feasible solutions quickly
+    model.setParam("Heuristics", 0.3)  # Increase heuristic efforts
+    #model.setParam("Presolve", 2)  # More aggressive presolve
+    #model.setParam("Cuts", 3)  # More aggressive cut generation
+    model.setParam("MIPGap", 1e-9)
+    #model.setParam("TuneTimeLimit", 2400)
 
     # Decision variables (vb) as binary, mapped to {-1, 1} in the objective
     vb = model.addVars(nVars, vtype=GRB.BINARY, name="vb")
+    # for j in range(nVars):
+    #     vb[j].Start = vBStart[j]
 
     model.update()
 
@@ -35,8 +45,8 @@ def iterSequQBlock(vx, mW, vC):
             sd = vx[j] - vbDec
             # Contribution of each element to the quadratic term
             se += mW[i, j] * sd
-        obj += se * se
-        # objective.add(se * se)
+        #obj += se * se
+        obj.add(se * se)
 
     # Set the objective
     model.setObjective(obj, GRB.MINIMIZE)
@@ -46,10 +56,12 @@ def iterSequQBlock(vx, mW, vC):
 
     # Output the solution
     if model.status == GRB.OPTIMAL:
+        print("Optimal solution found.")
         vb_out = np.array([2 * vb[j].X - 1 for j in range(nVars)])
-        ve = mW @ vx - mW @ vb_out  # Ensure dimensions align
+        ve = mW @ vx - mW @ vb_out  # Ensure dimensions align   
     else:
         print("No optimal solution found.")
-        vb_out, ve = None, None
+        vb_out = np.array([2 * vb[j].X - 1 for j in range(nVars)])
+        ve = mW @ vx - mW @ vb_out  # Ensure dimensions align   
    
     return vb_out, ve
