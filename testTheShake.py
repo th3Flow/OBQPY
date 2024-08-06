@@ -16,16 +16,16 @@ import scipy.signal as sigP
 # individual packages
 import sg, sa, sp, obq
 mtplt.close('all')
-bSNRideal = False
+bSNRideal = True
 
-sNbins = 2**12
+sNbins = 4096
 sFs = 4096
 sT = 1 / (sFs)
        
-sL = 103
-sBSize = 8
+sL = 131
+sBSize = 8 
 sHop = sBSize
-sSigFmax = 123
+sSigFmax = 63
 
 
 # %% [markdown]
@@ -43,7 +43,7 @@ vx = sg.MFnormalize(vx, -1, 1)
 # Save to a file
 #np.save('signal.npy', vx)
 #
-vx = np.load('signal.npy')
+#vx = np.load('signal.npy')
 
 #w, vGd = sigP.group_delay((vx,1), sFs, sNbins)
 #vx = sp.gdShift(vx, vGd)
@@ -57,21 +57,18 @@ vRIdeal = sp.idealBinFilt(sNbins, sg.freq2Bin(sSigFmax, sNbins, sFs), 'normal')
 mRIdeal = scLinAlg.toeplitz(vRIdeal)
 
 ### Filter Design ###
-# The cutoff frequency of the filter.
-sCutOffHz = sSigFmax # Hz
-sCutOffDig = sCutOffHz / sFs
+sPassHz     = sSigFmax# Hz
+sPassDig    = sPassHz / (sFs/2)
+sTransWHz   = 45
+sStopDig    = (sPassHz + sTransWHz) / (sFs/2)
+sCutOffDig  = sPassDig + (sStopDig - sPassDig)/2
 
-# Define transition width
-sTransWidth = 0.025  # Transition width relative to cutoff frequency
-sPassDig    = sCutOffDig
-sStopDig    = (sCutOffDig + sTransWidth)
+sApass = 0   # Passband ripple in dB
+sAstop = 39  # Stopband attenuation in dB
 
-# Frequency bands and desired gains for remez (normalized)
-sBands = [0, sPassDig, sStopDig, 0.5]
-sDesGain = [1, 0]
+sFiltordK, sBeta = sigP.kaiserord(sAstop, sStopDig - sPassDig)
+vWLs = sigP.firwin(sFiltordK, sCutOffDig, window=('kaiser',sBeta))
 
-# Use remez to create a lowpass FIR filter
-vWLs = sigP.remez(sL, sBands, sDesGain)
 vNormWLs = vWLs / np.sum(vWLs)
 
 mOnes = np.ones((sNbins,sNbins))
@@ -83,8 +80,9 @@ mSigDeltaFilt = np.tril(mOnes)
 # %%
 vBSequSingle, ve, ve_hat = obq.iterSequQ(vx,mSigDeltaFilt,0)
 print("Single-Iterative solution found!")
-#vBSequBlock, vEBlock = obq.fullOpt(vx,mW[sCut:sCut+len(vx)],vBSequSingle)
-vW = vWLs[0::]
+np.save('vBSequSingle.npy', vBSequSingle)
+
+vW = vNormWLs[0::]
 vBSequBlock, vEBlock = obq.iterBlockQnew(vx, vW, sBSize, sHop, 'grb')
 #vBSequBlock = vBSequBlock[sPadAdd::]
 
