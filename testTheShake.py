@@ -12,11 +12,13 @@ import matplotlib.gridspec as gridspec
 import scipy.linalg as scLinAlg
 import scipy.signal as sigP
 
+
 # %%
 # individual packages
-import sg, sa, sp, obq
+import sg, sa, sp, obq, filt
+
 mtplt.close('all')
-bSNRideal = True
+bSNRideal = False
 
 sNbins = 4096
 sFs = 4096
@@ -43,7 +45,7 @@ vx = sg.MFnormalize(vx, -1, 1)
 # Save to a file
 #np.save('signal.npy', vx)
 #
-#vx = np.load('signal.npy')
+vx = np.load('signal.npy')
 
 #w, vGd = sigP.group_delay((vx,1), sFs, sNbins)
 #vx = sp.gdShift(vx, vGd)
@@ -56,20 +58,19 @@ vx = sg.MFnormalize(vx, -1, 1)
 vRIdeal = sp.idealBinFilt(sNbins, sg.freq2Bin(sSigFmax, sNbins, sFs), 'normal')
 mRIdeal = scLinAlg.toeplitz(vRIdeal)
 
-### Filter Design ###
-sPassHz     = sSigFmax# Hz
-sPassDig    = sPassHz / (sFs/2)
-sTransWHz   = 45
-sStopDig    = (sPassHz + sTransWHz) / (sFs/2)
-sCutOffDig  = sPassDig + (sStopDig - sPassDig)/2
+sFpb     = 63
+sFsb     = 120
+sApb     = 0.075
+sAsb     = 45
 
-sApass = 0   # Passband ripple in dB
-sAstop = 39  # Stopband attenuation in dB
-
-sFiltordK, sBeta = sigP.kaiserord(sAstop, sStopDig - sPassDig)
-vWLs = sigP.firwin(sFiltordK, sCutOffDig, window=('kaiser',sBeta))
-
-vNormWLs = vWLs / np.sum(vWLs)
+# create Filter
+sTaps = filt.firFindOptN(sFs, sFpb, sFsb, sApb, sAsb)
+(vWcoeff, vw, vH, sRpb, sRsb, sHpbMin, sHpbMax, sHsbMax) = filt.fir_calc(sFs, sFpb, sFsb, sApb, sAsb, sTaps)
+##plotFilter 
+filt.plotFrequResp(vw, vH, sFs, sFpb, sFsb, sHpbMin, sHpbMax, sHsbMax)
+mtplt.tight_layout()
+mtplt.pause(1)
+vNormWLs = vWcoeff / np.sum(vWcoeff)
 
 mOnes = np.ones((sNbins,sNbins))
 mSigDeltaFilt = np.tril(mOnes)
@@ -116,7 +117,7 @@ vFreq = np.fft.fftfreq(sNbins, sT)
 if bSNRideal: 
     vxSigFilt           = mRIdeal @ vx
     vxErrFilt           = mRIdeal @ (vx - vx)
-    vbSequErrFilt       = mRIdeal @ (vx-vBSequSingle)
+    vbSequSigFilt       = mRIdeal @ (vx-vBSequSingle)
     vbBlockSequErrFilt  = mRIdeal @ (vx-vBSequBlock)
 else:
     vxSigFilt           = np.convolve(vW,vx,'same')

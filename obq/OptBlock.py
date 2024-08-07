@@ -21,11 +21,19 @@ def OptBlock(vx, mW, vE_hat, sL2Err):
     #Mixed-Integer Quadratically Constrained Quadratic Programming (MIQP)
     model = gp.Model("MIQCP")
     model.setParam("OutputFlag", 0)  # 0 to Suppress Gurobi output
-    model.setParam("TimeLimit",10)
-    model.setParam("VarBranch", 3)
-    model.setParam("MIPFocus", 3)  # Shift focus to finding good feasible solutions quickly
-    model.setParam("Heuristics", 0.3)  # Increase heuristic efforts
-    model.setParam("Presolve", 0)  # More aggressive presolve
+    model.setParam("TimeLimit",5)
+    model.setParam("VarBranch", 3)  # Use strong branching
+    model.setParam("MIPFocus", 3)  # Emphasize finding high-quality solutions quickly
+    model.setParam("Heuristics", 0.5)  # Increase heuristic efforts to 50%
+    model.setParam("Presolve", 2)  # Use aggressive presolve
+    model.setParam("Cuts", -1)  # Allow Gurobi to choose the most appropriate cut strategy
+    model.setParam("Threads", 0)  # Use all available threads
+    model.setParam("NodefileStart", 0.5)  # Start writing nodes to disk after memory limit is reached
+    model.setParam("MIPGap", 1e-4)  # Set a small MIP gap for higher solution accuracy
+    model.setParam("Symmetry", 2)  # Use automatic symmetry detection
+    model.setParam("AggFill", 10)  # Increase aggregation fill for presolve
+    model.setParam("NumericFocus", 3)  # Focus on numerical accuracy
+    model.setParam("Method", 3)  # Use the concurrent simplex and barrier methods
     
     # Decision variables (vb) as binary, mapped to {-1, 1} in the objective
     vb = model.addVars(snVars, vtype=GRB.BINARY, name="vb")

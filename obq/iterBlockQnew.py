@@ -54,7 +54,7 @@ def iterBlockQnew(vx, vw, sM, sH, sType):
             vCe = mC[:,0]
             
             if (sType == 'grb'):
-                vbBlock, veBlock = obq.OptBlock(vx[sStIdx:sEndIdx], mW_hat, vCe, 0)               
+                vbBlock, veBlock = obq.OptBlock(vx[sStIdx:sEndIdx], mW_hat, vCe, np.sum(veL2Block))               
             else:
                 vbBlock, veBlock = obq.combOptBlock(vx[sStIdx:sEndIdx], mW_hat)   
                    
