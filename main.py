@@ -22,10 +22,10 @@ sNbins = 2**12
 sFs = 4096
 sT = 1 / (sFs)
        
-sL = 103
-sBSize = 8
-sHop = sBSize
-sSigFmax = 123
+sL = 60
+sBSize = 64
+sPadLen = sNbins + (sL - 1)
+sSigFmax = 63 
 
 
 # %% [markdown]
@@ -45,9 +45,6 @@ vx = sg.MFnormalize(vx, -1, 1)
 #
 vx = np.load('signal.npy')
 
-#w, vGd = sigP.group_delay((vx,1), sFs, sNbins)
-#vx = sp.gdShift(vx, vGd)
-
 # %% [markdown]
 # Generate FiltersCoeff and corresp. Matrices
 
@@ -57,21 +54,24 @@ vRIdeal = sp.idealBinFilt(sNbins, sg.freq2Bin(sSigFmax, sNbins, sFs), 'normal')
 mRIdeal = scLinAlg.toeplitz(vRIdeal)
 
 ### Filter Design ###
+#The desired width of the transition from pass to stop,
+# relative to the Nyquist rate.
+sTransWidthHz = 225 #109
+sTransWidthDig = sTransWidthHz / (sFs /2)
+
+# The desired attenuation in the stop band, in dB.
+sAttdB = 40.0 #29
+
+# Compute the order and Kaiser parameter for the FIR filter.
+sTaps, sBeta = sigP.kaiserord(sAttdB, sTransWidthDig)
+
 # The cutoff frequency of the filter.
-sCutOffHz = sSigFmax # Hz
-sCutOffDig = sCutOffHz / sFs
+sCutOffHz = sSigFmax + 50  # +5        #Hz
+sCutOffDig = sCutOffHz / (sFs /2)
 
-# Define transition width
-sTransWidth = 0.025  # Transition width relative to cutoff frequency
-sPassDig    = sCutOffDig
-sStopDig    = (sCutOffDig + sTransWidth)
+# Use firwin with a Kaiser window to create a lowpass FIR filter.
+vWLs = sigP.firwin(sTaps, sCutOffDig, window=('kaiser', sBeta))
 
-# Frequency bands and desired gains for remez (normalized)
-sBands = [0, sPassDig, sStopDig, 0.5]
-sDesGain = [1, 0]
-
-# Use remez to create a lowpass FIR filter
-vWLs = sigP.remez(sL, sBands, sDesGain)
 vNormWLs = vWLs / np.sum(vWLs)
 
 mOnes = np.ones((sNbins,sNbins))
@@ -84,8 +84,8 @@ mSigDeltaFilt = np.tril(mOnes)
 vBSequSingle, ve, ve_hat = obq.iterSequQ(vx,mSigDeltaFilt,0)
 print("Single-Iterative solution found!")
 #vBSequBlock, vEBlock = obq.fullOpt(vx,mW[sCut:sCut+len(vx)],vBSequSingle)
-vW = vWLs[0::]
-vBSequBlock, vEBlock = obq.iterBlockQnew(vx, vW, sBSize, sHop, 'grb')
+vW = vNormWLs[0::]
+vBSequBlock, vEBlock = obq.iterBlockQ(vx, vW, sBSize, 'grb')
 #vBSequBlock = vBSequBlock[sPadAdd::]
 
 # %% [markdown]

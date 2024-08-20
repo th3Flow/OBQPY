@@ -10,51 +10,11 @@ from matplotlib import pyplot as plt
 from scipy import signal as sigP
 from matplotlib.ticker import FuncFormatter, MultipleLocator
 
+import filt
+
 def dB20(array):
     with np.errstate(divide='ignore'):
         return 20 * np.log10(array)
-
-
-def fir_calc(sFs, sFpb, sFsb, sApb, sAsb, sN):
-
-    sBands = np.array([0., sFpb/sFs, sFsb/sFs, .5])
-
-    # Remez weight calculation:
-    # https://www.dsprelated.com/showcode/209.php
-
-    sErr_pb = (1 - 10**(-sApb/20))/2      # /2 is not part of the article above, but makes it work much better.
-    sErr_sb = 10**(-sAsb/20)
-
-    sW_pb = 1/sErr_pb
-    sW_sb = 1/sErr_sb
-    
-    vHFilt = sigP.remez(
-            sN+1,                        # Desired number of taps
-            sBands,                      # All the band inflection points
-            [1,0],                       # Desired gain for each of the bands: 1 in the pass band, 0 in the stop band
-            [sW_pb, sW_sb]
-            )               
-    
-    (vw,vH) = sigP.freqz(vHFilt)
-    
-    sHpbMin = min(np.abs(vH[0:int(sFpb/sFs*2 * len(vH))]))
-    sHpbMax = max(np.abs(vH[0:int(sFpb/sFs*2 * len(vH))]))
-    sRpb = 1 - (sHpbMax - sHpbMin)
-    
-    sHsbMax = max(np.abs(vH[int(sFsb/sFs*2 * len(vH)+1):len(vH)]))
-    sRsb = sHsbMax
-
-    return (vHFilt, vw, vH, sRpb, sRsb, sHpbMin, sHpbMax, sHsbMax)
-
-def firFindOptN(sFs, sFpb, sFsb, sApb, sAsb, sNmin = 1, sNmax = 1000):
-    for sN in range(sNmin, sNmax):
-        (vHFilt, vw, vH, sRpb, sRsb, sHpbMin, sHpbMax, sHsbMax) = fir_calc(sFs, sFpb, sFsb, sApb, sAsb, sN)
-        if -dB20(sRpb) <= sApb and -dB20(sRsb) >= sAsb:
-            print("Trying up to N=%d" % sN)
-            print("Rpb: %fdB" % (-dB20(sRpb)))
-            print("Rsb: %fdB" % -dB20(sRsb))
-            return sN
-    return None
 
 def plotFrequResp(vw, vH, sFs, sFpb, sFsb, sHpbMin, sHpbMax, sHsbMax):
     fig, ax1 = plt.subplots()
