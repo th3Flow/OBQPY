@@ -46,7 +46,7 @@ The ISCAS 2025 paper demonstrates that block-based optimization can outperform t
 
 ## Reference
 
-Mayer, F., & Vogel, C. (2023). *An Optimization-Based Approach to One-Bit Quantization*. IEEE.
+F. Mayer and C. Vogel, “An Optimization-Based Approach to One-Bit Quantization,” in IEEE International Symposium on Circuits and Systems (ISCAS), 2024, p. 5
 
 ## Contact Information
 
