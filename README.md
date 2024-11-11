@@ -1,83 +1,56 @@
-# ISCAS and Research Overview on One-Bit Quantization
+# Research Overview: One-Bit Quantization and Processing
 
 ## Introduction
 
-This repository provides an in-depth exploration of research focused on one-bit quantization and signal processing. The contents include papers, projects, and documentation detailing methods for optimizing and implementing one-bit quantization for various applications in signal processing and communications.
+This document summarizes key research presented at ISCAS 2024 and ISCAS 2025, focused on advanced methods for one-bit quantization. These techniques are designed to optimize the transformation of real-valued signals into one-bit representations, a crucial step in simplifying hardware design and enhancing energy efficiency in digital signal processing.
 
-## Overview of Projects
+## ISCAS 2024: Optimization-Based Approach to One-Bit Quantization
 
-### 1. **Optimization-Based One-Bit Quantization (ISCAS 2024)**
-   - **Authors**: Florian Mayer, Christian Vogel
-   - **Abstract**: One-bit quantization simplifies signal representation by mapping real-valued signals into a binary format. This paper introduces a mapping function \( F(\cdot) \) that minimizes the squared \( l_2 \)-norm error between the original and quantized signals, leading to efficient one-bit representations.
-   - **Key Equations**:
-     \[
-     E(x, b) = \|e\|_2^2 = \sum_{n=0}^{N-1} |e_n|^2 = \|W \cdot (x - b)\|_2^2 = \|W \cdot d\|_2^2
-     \]
-   - **Special Cases**: The optimization framework generalizes methods like Sigma-Delta quantizers, highlighting new possibilities for adaptive one-bit signal processing.
+### Summary
+The ISCAS 2024 paper introduces an innovative framework for one-bit quantization that formulates the conversion of real-valued signals into one-bit signals using a mathematical optimization approach. This method utilizes a mapping function \( F(\cdot) \) to generate a one-bit signal \( b \) from a real-valued input \( x \). The core objective is to minimize the \( l_2 \)-norm error between the input and the quantized output:
+\[
+E(x, b) = \|W \cdot (x - b)\|^2_2,
+\]
+where \( W \) is a weight matrix that can be adjusted to change the quantizer's behavior.
 
-### 2. **Block-Based Optimization for One-Bit Quantization (ISCAS 2025)**
-   - **Objective**: To address the high noise introduced in complex signals through block-based partitioning of signals and independent optimization within each block.
-   - **Mathematical Formulation**:
-     \[
-     b = F(x) \quad \text{where} \quad x \in \mathbb{R}^N, \quad b \in \{-1, 1\}^N
-     \]
-   - **Error Analysis**:
-     \[
-     e = R \cdot (x - b), \quad E(x, b) = \|e\|_2^2
-     \]
+### Key Insights
+- **Generalization of Known Methods**: The optimization-based framework generalizes established techniques like Sigma-Delta quantization, showcasing its flexibility.
+- **Sequential Optimization**: To address the NP-hard nature of global optimization, the study implements a sequential approach, optimizing one sample \( b_n \) at a time. This approach reduces computational complexity and facilitates real-time processing.
+- **Applications**: The method is particularly beneficial for applications requiring efficient digital signal processing with minimal energy consumption.
 
-## Theoretical Insights and Research Contributions
+### Contributions
+The ISCAS 2024 work presents a powerful tool for designing one-bit quantizers that achieve high precision while being adaptable for specific use cases. This framework opens doors for exploring new quantization techniques that balance signal fidelity and computational feasibility.
 
-### A. **One-Bit Compressive Sensing**
-   - **Concept**: Extends classical compressive sensing by using 1-bit measurements as constraints and reconstructing signals on the unit sphere to preserve consistency.
-   - **Mathematical Insight**:
-     \[
-     y = \text{sign}(\Phi x), \quad \text{where } \|x\|_2 = 1
-     \]
+## ISCAS 2025: Block-Based Optimization for Frequency-Selective One-Bit Quantization
 
-### B. **Sigma-Delta Modulation Analysis**
-   - **Technique**: Achieves high-resolution ADC conversion through oversampling and noise shaping, allowing a one-bit ADC to exceed traditional multi-bit ADC performance.
+### Summary
+The ISCAS 2025 research extends the principles of optimization-based one-bit quantization by introducing a block-based method. This approach partitions the input signal into smaller blocks, allowing independent optimization of each block. This partitioning strategy addresses the challenges of quantization noise and enables frequency-selective processing.
 
-### C. **Sequential and Parallel Processing Approaches**
-   - **Sequential Optimization**: Simplifies one-bit signal reconstruction by updating one sample at a time.
-   - **Potential Challenges**:
-     - High computational demands for large-scale signals due to the NP-hard nature of global optimization.
+### Key Methodology
+- **Block Partitioning**: The input signal \( x \) is divided into blocks, each processed independently using a tailored mapping function \( F(\cdot) \). This approach allows for localized optimization, significantly improving signal reconstruction accuracy.
+- **Reconstruction and Error Analysis**: The reconstructed signal \( x_r \) is obtained through:
+\[
+x_r = R \cdot b,
+\]
+where \( R \) is a reconstruction filter. The error is minimized as:
+\[
+E(x, b) = \|x - R \cdot b\|^2_2.
+\]
 
-## Applications and Implications
+### Advantages
+- **Enhanced Flexibility**: The block-based framework offers greater control over noise shaping and adapts to various frequency requirements.
+- **Improved Reconstruction**: By focusing on smaller signal segments, this method enhances precision in complex signals with intricate spectral properties.
 
-- **Communications**: Enhances low-complexity, high-efficiency receivers with oversampling capabilities.
-- **Audio Processing**: Facilitates high sampling rates and reduces processing complexity.
-- **Machine Learning**: Optimizes neural network structures for edge devices by minimizing data size through one-bit representations.
+### Practical Implications
+The ISCAS 2025 paper demonstrates that block-based optimization can outperform traditional one-bit quantization methods, particularly in scenarios where specific frequency responses or detailed noise shaping are required. This makes it a valuable technique for applications in communications and audio signal processing where signal fidelity is crucial.
 
-## Open Research Questions
+## Reference
 
-- How can the one-bit quantization function \( F(\cdot) \) be enhanced to ensure exact signal reconstruction while maintaining low computational costs?
-- What adaptations in quantization can help handle noise and environmental uncertainties, leading to more robust systems?
-
-## File Structure
-
-```
-├── .git/
-├── 01_Library/
-├── 41_ISCAS2024/
-│   ├── optimization_approach.pdf
-├── 42_ISCAS2025/
-│   ├── block_based_quantization.pdf
-├── 90_Sandbox/
-│   ├── experimental_codes/
-├── 99_WasteBin/
-│   └── archived_notes.md
-├── README.md
-```
-
-## References and Citations
-
-1. Mayer, F., & Vogel, C. (2023). An Optimization-Based Approach to One-Bit Quantization. IEEE.
-2. Boufounos, P. T., & Baraniuk, R. G. (2008). 1-Bit Compressive Sensing.
-3. Aziz, P. M., Sorensen, H. V., & Van der Spiegel, J. (1996). An Overview of Sigma-Delta Converters.
+Mayer, F., & Vogel, C. (2023). *An Optimization-Based Approach to One-Bit Quantization*. IEEE.
 
 ## Contact Information
 
 **Author**: Florian Mayer  
 **Affiliation**: FH JOANNEUM University of Applied Sciences, Graz, Austria  
-**Email**: [florian.mayer@fh-joanneum.at](mailto:florian.mayer@fh-joanneum.at).
+**Email**: [florian.mayer@fh-joanneum.at](mailto:florian.mayer@fh-joanneum.at)
+
